@@ -14,9 +14,9 @@ class GBrank(object):
 
     def fit(self, X, ys, qid_lst):
         for n_tree in range(self.n_trees):
-            # 最初の木は0を返すだけの木とする
+            # 第一棵树是只返回0的树
             if n_tree == 0:
-                # X = [[0]], ys = [0] を学習させれば0を返す木となる
+                # X = [[0]], ys = [0] 让我们学习它成为一棵返回0的树
                 rt = RegressionTree(1)
                 rt.fit(np.array([[0]]), np.array([0]))
                 self.trees.append(rt)
@@ -31,13 +31,13 @@ class GBrank(object):
             ys_target = ys[target_index]
             qid_target = qid_lst[target_index]
 
-            # 直前の木々で予測を行う
+            #根据上一棵树做预测
             ys_predict = self._predict(X_target, n_tree)
 
             # 出現するqid
             qid_target_distinct = np.unique(qid_target)
 
-            # 各qidに対応する訓練データを取得し, n_tree本目の木で学習する訓練データを生成する
+            #获取与每个qid对应的训练数据，并生成要由第n-tree树学习的训练数据
             X_train_for_n_tree = []
             ys_train_for_n_tree = []
             for qid in qid_target_distinct:
@@ -49,12 +49,12 @@ class GBrank(object):
                     ind_1, (ys_target_1, ys_predict_1) = left
                     ind_2, (ys_target_2, ys_predict_2) = right
 
-                    # (ys_target_1 > ys_target_2)となるように交換
+                    #找到负例
                     if ys_target_1 < ys_target_2:
                         ys_target_1, ys_target_2 = ys_target_2, ys_target_1
                         ys_predict_1, ys_predict_2 = ys_predict_2, ys_predict_1
                         ind_1, ind_2 = ind_2, ind_1
-
+                    #产出两个不相交的子集
                     if ys_predict_1 < ys_predict_2 + self.tau:
                         X_train_for_n_tree.append(X_target_in_qid[ind_1])
                         ys_train_for_n_tree.append(ys_target_in_qid[ind_1] + self.tau)
@@ -69,9 +69,9 @@ class GBrank(object):
             self.trees.append(rt)
 
     def _predict(self, X, n_predict_trees):
-        # n_predict_trees本の木による予測結果リストを求める
+        #按树查找预测结果列表
         predict_lst_by_trees = [self.trees[n_tree].predict(X) for n_tree in range(n_predict_trees)]
-        # 各木による予測を統合する
+        #按每棵树整合预测
         predict_result = predict_lst_by_trees[0]
         for n_tree in range(1, n_predict_trees):
             predict_result = (n_tree * predict_result + self.shrinkage * predict_lst_by_trees[n_tree]) / (n_tree + 1)
