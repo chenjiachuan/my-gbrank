@@ -22,20 +22,20 @@ class RegressionTree(object):
         cand_leaves = [tree]
 
         while len(cand_leaves) != 0:
-            # 分割すべき葉を求める
+            # 要求叶子分开
             min_squared_error = np.inf
             for leaf in cand_leaves:
                 X_target = X[leaf.data_index]
                 ys_target = ys[leaf.data_index]
 
-                # どの特徴量で分割するかを決める
+                # 确定要划分的特征量
                 for d in range(X_target.shape[1]):
-                    # d番目の特徴量でデータを並び替える
+                    # 按第d个特征数量排序数据
                     argsort = np.argsort(X_target[:, d])
 
-                    # 二乗誤差が最小となる分割を求める
+                    # 查找具有最小平方误差的分部
                     for split in range(1, argsort.shape[0]):
-                        # [0, split), [split, N_target)で分割
+                        # [0, split), [split, N_target)分割
                         tmp_left_data_index = argsort[:split]
                         tmp_right_data_index = argsort[split:]
 
@@ -53,18 +53,18 @@ class RegressionTree(object):
                             split_feature_index = d
                             split_feature_value = X_target[:, d][tmp_right_data_index[0]]
 
-            # 分割する葉が求まらないときは終了
+            # 当没有获得要分割的叶子时，它结束
             if min_squared_error == np.inf:
                 break
 
-            # 分割する葉を候補集合から取り除く
+           # 从候选集中删除要分割的叶子
             cand_leaves.remove(target_leaf)
 
-            # 分割後の子ノードに割り当てられる要素数がmin_data_in_leaf未満なら, その葉では分割しない
+           # 如果在划分之后分配给子节点的元素的数量少于min_data_in_leaf，则不将其分割为叶子
             if left_data_index.shape[0] < self.min_data_in_leaf or right_data_index.shape[0] < self.min_data_in_leaf:
                 continue
 
-            # target_leafで分割を行う
+           
             left_node = Node(target_leaf, np.sort(left_data_index), np.mean(ys[left_data_index]))
             right_node = Node(target_leaf, np.sort(right_data_index), np.mean(ys[right_data_index]))
             target_leaf.split_feature_index = split_feature_index
@@ -72,7 +72,7 @@ class RegressionTree(object):
             target_leaf.left = left_node
             target_leaf.right = right_node
 
-            # 新しい葉を分割候補の葉リストに追加
+            # 添加新叶子以分割候选叶子列表
             if left_node.data_index.shape[0] > 1:
                 cand_leaves.append(left_node)
             if right_node.data_index.shape[0] > 1:
@@ -84,7 +84,7 @@ class RegressionTree(object):
         ys_predict = []
         for xs in X:
             node = self.tree
-            # 葉に到達するまで移動
+            # 移动到达叶子
             while node.left is not None and node.right is not None:
                 if xs[node.split_feature_index] < node.split_feature_value:
                     node = node.left
